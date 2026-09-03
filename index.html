@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#5B8DEF" />
+<title>使用電子書承諾</title>
+<style>
+:root{
+  --bg:#F4F7FD; --card:#fff; --ink:#1E293B; --muted:#64748B;
+  --primary:#5B8DEF; --primary-dark:#3B6FD6; --ok:#22C55E; --bad:#EF4444;
+  --gold:#F59E0B; --silver:#94A3B8; --bronze:#D97706;
+  --border:#E2E8F0; --hl:#FEF08A;
+  --fs: clamp(1.15rem, 2.6vw, 1.55rem);
+  --fs-lg: clamp(1.5rem, 4vw, 2.1rem);
+  --fs-xl: clamp(1.9rem, 5vw, 2.6rem);
+  --radius:20px; --gap:14px;
+  --touch: min(72px, 18vw);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"PingFang HK","Noto Sans TC","Helvetica Neue",sans-serif;font-size:var(--fs)}
+body{padding:12px;padding-bottom:28px}
+button{font:inherit;cursor:pointer;border:none}
+img{max-width:100%;display:block;border-radius:16px}
+.screen{display:none;max-width:920px;margin:0 auto}
+.screen.on{display:block}
+.card{background:var(--card);border:3px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 8px 24px rgba(30,41,59,.08);padding:18px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:var(--fs-lg);color:var(--primary-dark)}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tool{min-height:44px;min-width:44px;padding:8px 12px;border-radius:12px;
+  background:#EEF3FF;border:2px solid #C7D7F8;color:var(--primary-dark);font-weight:700}
+.tool:active{transform:scale(.97)}
+.hero-img{width:100%;aspect-ratio:16/9;object-fit:cover;border:3px solid var(--border);margin-bottom:14px}
+h1{margin:0 0 8px;font-size:var(--fs-xl);line-height:1.25}
+.sub{color:var(--muted);margin:0 0 16px;line-height:1.45}
+.hl{background:var(--hl);padding:0 .18em;border-radius:6px;font-weight:800}
+label{display:block;font-weight:700;margin-bottom:6px}
+input[type=text]{width:100%;padding:14px 16px;border:3px solid var(--border);border-radius:14px;
+  font-size:var(--fs-lg);margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:var(--touch);padding:12px 22px;border-radius:16px;font-weight:800;
+  border:3px solid transparent;transition:transform .12s, background .12s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary-dark);width:100%;font-size:var(--fs-lg)}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-ghost{background:#fff;border-color:var(--border);color:var(--ink)}
+.btn-ok{background:var(--ok);color:#fff;border-color:#16A34A}
+.btn-bad{background:#FEE2E2;color:#991B1B;border-color:#FECACA}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row > *{flex:1;min-width:140px}
+.progress{height:14px;background:#E2E8F0;border-radius:999px;overflow:hidden;margin:10px 0 16px}
+.progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),#8B5CF6);transition:width .3s}
+.learn-img{width:100%;aspect-ratio:4/3;object-fit:cover;border:3px solid var(--border);margin-bottom:12px}
+.keyword{font-size:var(--fs-xl);font-weight:900;text-align:center;margin:8px 0 4px}
+.line{text-align:center;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.choices{grid-template-columns:1fr}}
+.choice{background:#fff;border:4px solid var(--border);border-radius:18px;padding:10px;text-align:center;
+  min-height:var(--touch);display:flex;flex-direction:column;gap:8px;align-items:center}
+.choice img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;border:2px solid #EEF2FF}
+.choice span{font-weight:800;font-size:var(--fs)}
+.choice:active{transform:scale(.98)}
+.choice.correct{border-color:var(--ok);background:#ECFDF5;box-shadow:0 0 0 4px rgba(34,197,94,.2)}
+.choice.wrong{border-color:var(--bad);background:#FEF2F2;box-shadow:0 0 0 4px rgba(239,68,68,.15)}
+.choice.disabled{pointer-events:none;opacity:.85}
+.feedback{margin-top:12px;padding:14px;border-radius:14px;font-weight:800;text-align:center;display:none}
+.feedback.on{display:block}
+.feedback.ok{background:#ECFDF5;color:#166534;border:3px solid #86EFAC}
+.feedback.no{background:#FEF2F2;color:#991B1B;border:3px solid #FECACA}
+.checks{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media (max-width:640px){.checks{grid-template-columns:1fr}}
+.check{border:4px solid var(--border);border-radius:16px;padding:12px;background:#fff;font-weight:800;min-height:var(--touch)}
+.check.on{border-color:var(--ok);background:#ECFDF5}
+.cert{text-align:center;padding:20px}
+.cert-img{width:min(100%,520px);margin:0 auto 14px;border:3px solid var(--gold)}
+.medal{font-size:clamp(2.4rem,8vw,3.6rem);font-weight:900;margin:8px 0}
+.medal.gold{color:var(--gold)}.medal.silver{color:var(--silver)}.medal.bronze{color:var(--bronze)}
+.score{font-size:var(--fs-lg);font-weight:800;margin:6px 0 14px}
+.teacher{margin-top:18px;border-top:2px dashed var(--border);padding-top:12px}
+.teacher summary{cursor:pointer;color:var(--muted);font-weight:700;font-size:.95em}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);
+  background:#0F172A;color:#fff;padding:12px 18px;border-radius:999px;font-weight:700;
+  opacity:0;transition:.25s;z-index:50;max-width:90vw}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.l3-overlay{position:fixed;inset:0;background:rgba(15,23,42,.92);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.l3-overlay.on{display:flex}
+.l3-card{background:#fff;border-radius:24px;padding:28px;max-width:640px;width:100%;text-align:center}
+.l3-card img{width:100%;max-height:50vh;object-fit:contain;margin-bottom:16px}
+.l3-word{font-size:clamp(2.4rem,10vw,4rem);font-weight:900}
+.hidden{display:none!important}
+.fs-l2{font-size:calc(var(--fs) * 1.35)}
+.fs-l2 .keyword,.fs-l2 h1{font-size:calc(var(--fs-xl) * 1.25)}
+.fs-l3-hint{outline:3px dashed var(--primary)}
+</style>
+</head>
+<body>
+<div id="toast" class="toast" role="status"></div>
+<div id="l3" class="l3-overlay" onclick="closeL3()"><div class="l3-card" onclick="event.stopPropagation()">
+  <img id="l3img" alt="" />
+  <div class="l3-word" id="l3word"></div>
+  <button class="btn btn-primary" style="margin-top:16px" onclick="closeL3()">關閉</button>
+</div></div>
+
+<!-- HOME -->
+<section id="home" class="screen on">
+  <div class="topbar">
+    <div class="brand">電子書承諾</div>
+    <div class="tools">
+      <button class="tool" onclick="cycleFont()" title="字體">A</button>
+      <button class="tool" onclick="speak('使用電子書承諾。我會善用平板學習。')">🔊</button>
+    </div>
+  </div>
+  <div class="card">
+    <img class="hero-img" src="assets/images/hero.jpg" alt="善用平板學習" />
+    <h1>使用電子書<span class="hl">承諾</span></h1>
+    <p class="sub">我會遵守承諾，善用平板進行學習！</p>
+    <label for="name">你的名字</label>
+    <input id="name" type="text" maxlength="12" placeholder="輸入名字" autocomplete="off" />
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn btn-ghost" onclick="setLevel(2)">初 · 2選1</button>
+      <button class="btn btn-ghost" id="lvlMid" onclick="setLevel(3)">中 · 3選1</button>
+      <button class="btn btn-ghost" id="lvlHigh" onclick="setLevel(4)">高 · 4選</button>
+    </div>
+    <button class="btn btn-primary" onclick="startLearn()">開始學習</button>
+    <details class="teacher">
+      <summary>老師角</summary>
+      <p class="sub" style="margin-top:8px">預設初組 2 選 1。中／高可改選項數。紀錄存在本機。</p>
+      <button class="btn btn-ghost" style="width:100%" onclick="showRecords()">查看紀錄</button>
+    </details>
+  </div>
+</section>
+
+<!-- LEARN -->
+<section id="learn" class="screen">
+  <div class="topbar">
+    <div class="brand">學承諾 <span id="learnStep"></span></div>
+    <div class="tools">
+      <button class="tool" onclick="cycleFont()">A</button>
+      <button class="tool" id="learnSpeak">🔊</button>
+      <button class="tool" onclick="goHome()">⌂</button>
+    </div>
+  </div>
+  <div class="progress"><i id="learnBar"></i></div>
+  <div class="card">
+    <img class="learn-img" id="learnImg" alt="" onclick="openL3(this.src, state.pledges[state.learnIndex].keyword)" />
+    <div class="keyword"><span class="hl" id="learnKw"></span></div>
+    <p class="line" id="learnLine"></p>
+    <button class="btn btn-primary" id="learnNext" onclick="nextLearn()">下一條</button>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="screen">
+  <div class="topbar">
+    <div class="brand">小測驗 <span id="quizStep"></span></div>
+    <div class="tools">
+      <button class="tool" onclick="cycleFont()">A</button>
+      <button class="tool" id="quizSpeak">🔊</button>
+      <button class="tool" onclick="goHome()">⌂</button>
+    </div>
+  </div>
+  <div class="progress"><i id="quizBar"></i></div>
+  <div class="card">
+    <p class="line" style="font-weight:800;color:var(--ink)" id="quizQ"></p>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="btn btn-primary hidden" id="quizNext" onclick="nextQuiz()" style="margin-top:12px">下一題</button>
+  </div>
+</section>
+
+<!-- CARE mini -->
+<section id="care" class="screen">
+  <div class="topbar">
+    <div class="brand">愛護平板</div>
+    <div class="tools">
+      <button class="tool" onclick="cycleFont()">A</button>
+      <button class="tool" onclick="speak('我會愛護平板電腦。不摔不撞。保持清潔。小心使用。')">🔊</button>
+      <button class="tool" onclick="goHome()">⌂</button>
+    </div>
+  </div>
+  <div class="card">
+    <img class="learn-img" src="assets/images/p5_care.jpg" alt="愛護平板" />
+    <p class="line">請撳齊 3 個好習慣</p>
+    <div class="checks" id="careChecks"></div>
+    <div class="feedback" id="careFb"></div>
+    <button class="btn btn-primary" style="margin-top:12px" onclick="finishCare()">完成</button>
+  </div>
+</section>
+
+<!-- RESULT -->
+<section id="result" class="screen">
+  <div class="topbar">
+    <div class="brand">完成！</div>
+    <div class="tools">
+      <button class="tool" onclick="cycleFont()">A</button>
+      <button class="tool" onclick="goHome()">⌂</button>
+    </div>
+  </div>
+  <div class="card cert">
+    <img class="cert-img" src="assets/images/celebrate.jpg" alt="恭喜" />
+    <div class="medal" id="medal">金獎</div>
+    <h1 id="certName">同學</h1>
+    <p class="sub">做個有責任、守規則的好學生！</p>
+    <div class="score" id="certScore"></div>
+    <button class="btn btn-primary" onclick="speakResult()">🔊 讀獎狀</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="restart()">再玩一次</button>
+  </div>
+</section>
+
+<!-- RECORDS -->
+<section id="records" class="screen">
+  <div class="topbar">
+    <div class="brand">學習紀錄</div>
+    <div class="tools"><button class="tool" onclick="showScreen('home')">←</button></div>
+  </div>
+  <div class="card" id="recordsBody"></div>
+</section>
+
+<script>
+const IMG = 'assets/images/';
+const STORE_KEY = 'ebook_pledge_v1';
+const state = {
+  name: '',
+  level: 2, // choices count: 2/3/4
+  font: 1, // 1 2 3
+  learnIndex: 0,
+  quizIndex: 0,
+  correct: 0,
+  answered: 0,
+  careOk: false,
+  pledges: [
+    {
+      id: 'p1', keyword: '聽指示', line: '我會按照老師的指示，使用指定的電子書進行學習。',
+      img: IMG + 'p1_follow.jpg', speak: '我會按照老師的指示，使用指定的電子書進行學習。'
+    },
+    {
+      id: 'p2', keyword: '唔亂撳', line: '我會控制自己，不隨意按其他按鈕。',
+      img: IMG + 'p2_control.jpg', speak: '我會控制自己，不隨意按其他按鈕。'
+    },
+    {
+      id: 'p3', keyword: '唔離開', line: '上課期間不會離開電子書頁面。',
+      img: IMG + 'p3_stay.jpg', speak: '上課期間不會離開電子書頁面。'
+    },
+    {
+      id: 'p4', keyword: '妥善存放', line: '使用後，我會按照老師的指示妥善存放。',
+      img: IMG + 'p4_store.jpg', speak: '使用後，我會按照老師的指示妥善存放。'
+    },
+    {
+      id: 'p5', keyword: '愛護平板', line: '我會愛護平板電腦：不摔、不撞，保持清潔，小心使用。',
+      img: IMG + 'p5_care.jpg', speak: '我會愛護平板電腦。'
+    }
+  ],
+  questions: []
+};
+
+function buildQuestions() {
+  const bank = [
+    {
+      q: '上課要用邊個？', speak: '上課要用邊個？',
+      options: [
+        { img: IMG + 'good_learn.jpg', label: '指定電子書', ok: true },
+        { img: IMG + 'bad_game.jpg', label: '亂玩遊戲', ok: false },
+        { img: IMG + 'bad_drop.jpg', label: '亂放桌邊', ok: false },
+        { img: IMG + 'good_clean.jpg', label: '抹機', ok: false }
+      ]
+    },
+    {
+      q: '邊個係控制自己？', speak: '邊個係控制自己？',
+      options: [
+        { img: IMG + 'p2_control.jpg', label: '專心唔亂撳', ok: true },
+        { img: IMG + 'bad_game.jpg', label: '亂撳其他掣', ok: false },
+        { img: IMG + 'bad_drop.jpg', label: '唔小心', ok: false },
+        { img: IMG + 'good_store.jpg', label: '收機', ok: false }
+      ]
+    },
+    {
+      q: '上課應該點？', speak: '上課應該點？',
+      options: [
+        { img: IMG + 'p3_stay.jpg', label: '留喺電子書', ok: true },
+        { img: IMG + 'bad_game.jpg', label: '離開去玩', ok: false },
+        { img: IMG + 'bad_drop.jpg', label: '掉低機', ok: false },
+        { img: IMG + 'good_clean.jpg', label: '抹螢幕', ok: false }
+      ]
+    },
+    {
+      q: '用完點做？', speak: '用完點做？',
+      options: [
+        { img: IMG + 'good_store.jpg', label: '妥善存放', ok: true },
+        { img: IMG + 'bad_drop.jpg', label: '隨便掉', ok: false },
+        { img: IMG + 'bad_game.jpg', label: '繼續玩', ok: false },
+        { img: IMG + 'good_learn.jpg', label: '繼續睇書', ok: false }
+      ]
+    },
+    {
+      q: '邊個係愛護平板？', speak: '邊個係愛護平板？',
+      options: [
+        { img: IMG + 'good_clean.jpg', label: '保持清潔', ok: true },
+        { img: IMG + 'bad_drop.jpg', label: '摔撞', ok: false },
+        { img: IMG + 'bad_game.jpg', label: '亂玩', ok: false },
+        { img: IMG + 'p1_follow.jpg', label: '聽指示', ok: false }
+      ]
+    }
+  ];
+  // shuffle option order per question; keep 1 correct + (level-1) distractors
+  state.questions = bank.map(q => {
+    const correct = q.options.find(o => o.ok);
+    const wrongs = q.options.filter(o => !o.ok).sort(() => Math.random() - 0.5);
+    const need = Math.max(1, state.level - 1);
+    const opts = [correct, ...wrongs.slice(0, need)].sort(() => Math.random() - 0.5);
+    return { q: q.q, speak: q.speak, options: opts };
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0, 0);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('on'), 1800);
+}
+
+function speak(text) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-HK';
+    u.rate = 0.9;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(x => /zh-HK|yue|Cantonese/i.test(x.lang + x.name))
+      || voices.find(x => /zh|Chinese|雲/i.test(x.lang + x.name));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+speechSynthesis.onvoiceschanged = () => {};
+
+function cycleFont() {
+  state.font = state.font >= 3 ? 1 : state.font + 1;
+  document.body.classList.remove('fs-l2');
+  if (state.font === 2) document.body.classList.add('fs-l2');
+  if (state.font === 3) {
+    const kw = document.getElementById('learnKw')?.textContent || '承諾';
+    const img = document.getElementById('learnImg')?.src || IMG + 'hero.jpg';
+    openL3(img, kw);
+  }
+  toast(state.font === 1 ? '字：普通' : state.font === 2 ? '字：放大' : '字：超大卡');
+}
+
+function openL3(src, word) {
+  document.getElementById('l3img').src = src;
+  document.getElementById('l3word').textContent = word;
+  document.getElementById('l3').classList.add('on');
+  speak(word);
+}
+function closeL3() { document.getElementById('l3').classList.remove('on'); }
+
+function setLevel(n) {
+  state.level = n;
+  toast(n === 2 ? '初組：2選1' : n === 3 ? '中組：3選1' : '高組：4選');
+  document.querySelectorAll('#home .row .btn').forEach((b, i) => {
+    b.style.borderColor = ([2,3,4][i] === n) ? 'var(--primary)' : '';
+    b.style.background = ([2,3,4][i] === n) ? '#EEF3FF' : '';
+  });
+}
+setLevel(2);
+
+function startLearn() {
+  const name = (document.getElementById('name').value || '').trim() || '同學';
+  state.name = name.slice(0, 12);
+  state.learnIndex = 0;
+  state.quizIndex = 0;
+  state.correct = 0;
+  state.answered = 0;
+  state.careOk = false;
+  buildQuestions();
+  showLearn();
+}
+
+function showLearn() {
+  showScreen('learn');
+  const p = state.pledges[state.learnIndex];
+  const n = state.pledges.length;
+  document.getElementById('learnStep').textContent = `${state.learnIndex + 1}/${n}`;
+  document.getElementById('learnBar').style.width = ((state.learnIndex) / n * 100) + '%';
+  document.getElementById('learnImg').src = p.img;
+  document.getElementById('learnKw').textContent = p.keyword;
+  document.getElementById('learnLine').textContent = p.line;
+  document.getElementById('learnNext').textContent = state.learnIndex === n - 1 ? '去小測驗' : '下一條';
+  document.getElementById('learnSpeak').onclick = () => speak(p.speak);
+  speak(p.speak);
+}
+
+function nextLearn() {
+  if (state.learnIndex < state.pledges.length - 1) {
+    state.learnIndex++;
+    showLearn();
+  } else {
+    document.getElementById('learnBar').style.width = '100%';
+    startQuiz();
+  }
+}
+
+function startQuiz() {
+  state.quizIndex = 0;
+  state.correct = 0;
+  state.answered = 0;
+  showQuiz();
+}
+
+function showQuiz() {
+  showScreen('quiz');
+  const q = state.questions[state.quizIndex];
+  const n = state.questions.length;
+  document.getElementById('quizStep').textContent = `${state.quizIndex + 1}/${n}`;
+  document.getElementById('quizBar').style.width = (state.quizIndex / n * 100) + '%';
+  document.getElementById('quizQ').innerHTML = q.q.replace(/[\u4e00-\u9fff]{2,4}/, m => `<span class="hl">${m}</span>`);
+  document.getElementById('quizSpeak').onclick = () => speak(q.speak);
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('quizNext').classList.add('hidden');
+  const box = document.getElementById('choices');
+  box.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.type = 'button';
+    b.innerHTML = `<img src="${opt.img}" alt="${opt.label}" /><span>${opt.label}</span>`;
+    b.onclick = () => pick(i, opt.ok);
+    box.appendChild(b);
+  });
+  speak(q.speak);
+}
+
+function pick(i, ok) {
+  const box = document.getElementById('choices');
+  if (box.dataset.locked === '1') return;
+  box.dataset.locked = '1';
+  const kids = [...box.children];
+  kids.forEach(c => c.classList.add('disabled'));
+  kids[i].classList.add(ok ? 'correct' : 'wrong');
+  if (!ok) {
+    const right = state.questions[state.quizIndex].options.findIndex(o => o.ok);
+    if (right >= 0) kids[right].classList.add('correct');
+  }
+  state.answered++;
+  if (ok) state.correct++;
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback on ' + (ok ? 'ok' : 'no');
+  fb.textContent = ok ? '做得好！' : '再記一次：選正確做法';
+  speak(ok ? '做得好' : '再試記住正確做法');
+  document.getElementById('quizNext').classList.remove('hidden');
+  // unlock for next
+  setTimeout(() => { box.dataset.locked = '0'; }, 300);
+}
+
+function nextQuiz() {
+  if (state.quizIndex < state.questions.length - 1) {
+    state.quizIndex++;
+    showQuiz();
+  } else {
+    document.getElementById('quizBar').style.width = '100%';
+    showCare();
+  }
+}
+
+function showCare() {
+  showScreen('care');
+  const items = [
+    { id: 'no-drop', label: '不摔、不撞', img: IMG + 'p5_care.jpg' },
+    { id: 'clean', label: '保持清潔', img: IMG + 'good_clean.jpg' },
+    { id: 'careful', label: '小心使用', img: IMG + 'good_learn.jpg' }
+  ];
+  state._care = new Set();
+  const box = document.getElementById('careChecks');
+  box.innerHTML = '';
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.className = 'check';
+    b.type = 'button';
+    b.innerHTML = `<img src="${it.img}" alt="" style="width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:12px;margin-bottom:8px"/><div>${it.label}</div>`;
+    b.onclick = () => {
+      if (state._care.has(it.id)) { state._care.delete(it.id); b.classList.remove('on'); }
+      else { state._care.add(it.id); b.classList.add('on'); speak(it.label); }
+    };
+    box.appendChild(b);
+  });
+  document.getElementById('careFb').className = 'feedback';
+}
+
+function finishCare() {
+  const ok = state._care && state._care.size >= 3;
+  state.careOk = !!ok;
+  const fb = document.getElementById('careFb');
+  fb.className = 'feedback on ' + (ok ? 'ok' : 'no');
+  fb.textContent = ok ? '三個好習慣都記得！' : '請撳齊三個再完成';
+  if (!ok) { speak('請撳齊三個'); return; }
+  if (ok) state.correct += 1; // bonus point
+  state.answered += 1;
+  showResult();
+}
+
+function medalOf(pct) {
+  if (pct >= 90) return { name: '金獎', cls: 'gold' };
+  if (pct >= 70) return { name: '銀獎', cls: 'silver' };
+  return { name: '銅獎', cls: 'bronze' };
+}
+
+function showResult() {
+  showScreen('result');
+  const total = state.answered || 1;
+  const pct = Math.round((state.correct / total) * 100);
+  const m = medalOf(pct);
+  const medal = document.getElementById('medal');
+  medal.textContent = m.name;
+  medal.className = 'medal ' + m.cls;
+  document.getElementById('certName').textContent = state.name;
+  document.getElementById('certScore').textContent = `答對 ${state.correct}/${total}（${pct}%）`;
+  saveRecord(pct, m.name);
+  speak(`${state.name}，恭喜你得到${m.name}。一起做個有責任、守規則的好學生！`);
+}
+
+function speakResult() {
+  const m = document.getElementById('medal').textContent;
+  speak(`${state.name}，恭喜你得到${m}。一起做個有責任、守規則的好學生！`);
+}
+
+function saveRecord(pct, medal) {
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) {}
+  if (!Array.isArray(arr)) arr = [];
+  arr.unshift({ name: state.name, pct, medal, level: state.level, t: new Date().toISOString() });
+  arr = arr.slice(0, 50);
+  localStorage.setItem(STORE_KEY, JSON.stringify(arr));
+}
+
+function showRecords() {
+  showScreen('records');
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) {}
+  const body = document.getElementById('recordsBody');
+  if (!arr.length) { body.innerHTML = '<p class="sub">暫無紀錄</p>'; return; }
+  body.innerHTML = arr.map(r => {
+    const d = (r.t || '').slice(0, 16).replace('T', ' ');
+    return `<div style="border-bottom:2px solid var(--border);padding:10px 0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <strong>${escapeHtml(r.name)}</strong>
+      <span>${r.medal} ${r.pct}% · Lv${r.level}</span>
+      <span class="sub">${d}</span>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function goHome() {
+  speechSynthesis.cancel();
+  showScreen('home');
+}
+function restart() {
+  document.getElementById('name').value = state.name === '同學' ? '' : state.name;
+  startLearn();
+}
+
+// preload
+['hero','p1_follow','p2_control','p3_stay','p4_store','p5_care','good_learn','bad_game','good_clean','bad_drop','good_store','celebrate']
+  .forEach(n => { const i = new Image(); i.src = IMG + n + '.jpg'; });
+</script>
+</body>
+</html>
