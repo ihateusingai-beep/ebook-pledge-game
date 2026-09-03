@@ -289,23 +289,24 @@ const state = {
 };
 
 function buildQuestions() {
+  // 干擾項只放「明顯錯」行為，唔好用其他正確信條（如抹機/收機）作錯項
   const bank = [
     {
       q: '邊個係正確使用電子書行為？', speak: '邊個係正確使用電子書行為？',
       options: [
-        { img: IMG + 'good_learn.jpg', label: '指定電子書', ok: true },
+        { img: IMG + 'good_learn.jpg', label: '用指定電子書', ok: true },
         { img: IMG + 'bad_game.jpg', label: '亂玩遊戲', ok: false },
-        { img: IMG + 'bad_drop.jpg', label: '亂放桌邊', ok: false },
-        { img: IMG + 'good_clean.jpg', label: '抹機', ok: false }
+        { img: IMG + 'bad_video.jpg', label: '偷偷睇片', ok: false },
+        { img: IMG + 'bad_tap.jpg', label: '亂撳其他掣', ok: false }
       ]
     },
     {
       q: '邊個係控制自己？', speak: '邊個係控制自己？',
       options: [
         { img: IMG + 'p2_control.jpg', label: '專心唔亂撳', ok: true },
-        { img: IMG + 'bad_game.jpg', label: '亂撳其他掣', ok: false },
-        { img: IMG + 'bad_drop.jpg', label: '唔小心', ok: false },
-        { img: IMG + 'good_store.jpg', label: '收機', ok: false }
+        { img: IMG + 'bad_tap.jpg', label: '亂撳其他掣', ok: false },
+        { img: IMG + 'bad_game.jpg', label: '走去玩遊戲', ok: false },
+        { img: IMG + 'bad_video.jpg', label: '偷偷睇片', ok: false }
       ]
     },
     {
@@ -313,26 +314,26 @@ function buildQuestions() {
       options: [
         { img: IMG + 'p3_stay.jpg', label: '留喺電子書', ok: true },
         { img: IMG + 'bad_game.jpg', label: '離開去玩', ok: false },
-        { img: IMG + 'bad_drop.jpg', label: '掉低機', ok: false },
-        { img: IMG + 'good_clean.jpg', label: '抹螢幕', ok: false }
+        { img: IMG + 'bad_video.jpg', label: '走去睇片', ok: false },
+        { img: IMG + 'bad_tap.jpg', label: '亂撳離開頁', ok: false }
       ]
     },
     {
       q: '用完點做？', speak: '用完點做？',
       options: [
         { img: IMG + 'good_store.jpg', label: '妥善存放', ok: true },
-        { img: IMG + 'bad_drop.jpg', label: '隨便掉', ok: false },
-        { img: IMG + 'bad_game.jpg', label: '繼續玩', ok: false },
-        { img: IMG + 'good_learn.jpg', label: '繼續睇書', ok: false }
+        { img: IMG + 'bad_drop.jpg', label: '隨便掉低', ok: false },
+        { img: IMG + 'bad_game.jpg', label: '繼續玩唔收', ok: false },
+        { img: IMG + 'bad_tap.jpg', label: '亂撳唔理', ok: false }
       ]
     },
     {
       q: '邊個係愛護平板？', speak: '邊個係愛護平板？',
       options: [
         { img: IMG + 'good_clean.jpg', label: '保持清潔', ok: true },
-        { img: IMG + 'bad_drop.jpg', label: '摔撞', ok: false },
-        { img: IMG + 'bad_game.jpg', label: '亂玩', ok: false },
-        { img: IMG + 'p1_follow.jpg', label: '聽指示', ok: false }
+        { img: IMG + 'bad_drop.jpg', label: '摔撞掉低', ok: false },
+        { img: IMG + 'bad_tap.jpg', label: '大力亂撳', ok: false },
+        { img: IMG + 'bad_game.jpg', label: '當玩具掟', ok: false }
       ]
     }
   ];
@@ -633,7 +634,7 @@ function restart() {
 }
 
 // preload
-['hero','p1_follow','p2_control','p3_stay','p4_store','p5_care','good_learn','bad_game','good_clean','bad_drop','good_store','celebrate']
+['hero','p1_follow','p2_control','p3_stay','p4_store','p5_care','good_learn','bad_game','bad_video','bad_tap','good_clean','bad_drop','good_store','celebrate']
   .forEach(n => { const i = new Image(); i.src = IMG + n + '.jpg'; });
 </script>
 </body>
