@@ -199,7 +199,10 @@ input[type=text]{width:100%;padding:14px 16px;border:3px solid var(--border);bor
     <p class="line" style="font-weight:800;color:var(--ink)" id="quizQ"></p>
     <div class="choices" id="choices"></div>
     <div class="feedback" id="feedback"></div>
-    <button class="btn btn-primary hidden" id="quizNext" onclick="nextQuiz()" style="margin-top:12px">下一題</button>
+    <div class="row" style="margin-top:12px">
+      <button class="btn btn-ghost hidden" id="quizRetry" onclick="retryQuiz()">再答一次</button>
+      <button class="btn btn-primary hidden" id="quizNext" onclick="nextQuiz()">下一題</button>
+    </div>
   </div>
 </section>
 
@@ -477,6 +480,8 @@ function startQuiz() {
 
 function showQuiz() {
   showScreen('quiz');
+  state.pickedThisQ = false;
+  state.pickOk = null;
   const q = state.questions[state.quizIndex];
   const n = state.questions.length;
   document.getElementById('quizStep').textContent = `${state.quizIndex + 1}/${n}`;
@@ -484,8 +489,10 @@ function showQuiz() {
   document.getElementById('quizQ').innerHTML = q.q.replace(/[\u4e00-\u9fff]{2,4}/, m => `<span class="hl">${m}</span>`);
   document.getElementById('quizSpeak').onclick = () => speak(q.speak);
   document.getElementById('feedback').className = 'feedback';
+  document.getElementById('quizRetry').classList.add('hidden');
   document.getElementById('quizNext').classList.add('hidden');
   const box = document.getElementById('choices');
+  box.dataset.locked = '0';
   box.innerHTML = '';
   const letters = ['A', 'B', 'C', 'D'];
   q.options.forEach((opt, i) => {
@@ -511,15 +518,29 @@ function pick(i, ok) {
     const right = state.questions[state.quizIndex].options.findIndex(o => o.ok);
     if (right >= 0) kids[right].classList.add('correct');
   }
-  state.answered++;
-  if (ok) state.correct++;
+  if (!state.pickedThisQ) {
+    state.answered++;
+    if (ok) state.correct++;
+    state.pickedThisQ = true;
+    state.pickOk = ok;
+  }
   const fb = document.getElementById('feedback');
   fb.className = 'feedback on ' + (ok ? 'ok' : 'no');
   fb.textContent = ok ? '做得好！' : '再記一次：選正確做法';
   speak(ok ? '做得好' : '再試記住正確做法');
+  document.getElementById('quizRetry').classList.remove('hidden');
   document.getElementById('quizNext').classList.remove('hidden');
-  // unlock for next
-  setTimeout(() => { box.dataset.locked = '0'; }, 300);
+}
+
+function retryQuiz() {
+  if (state.pickedThisQ) {
+    state.answered = Math.max(0, state.answered - 1);
+    if (state.pickOk) state.correct = Math.max(0, state.correct - 1);
+  }
+  state.pickedThisQ = false;
+  state.pickOk = null;
+  speechSynthesis.cancel();
+  showQuiz();
 }
 
 function nextQuiz() {
