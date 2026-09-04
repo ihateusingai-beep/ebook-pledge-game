@@ -148,7 +148,7 @@ input[type=text]{width:100%;padding:14px 16px;border:3px solid var(--border);bor
     <div class="brand">學承諾 <span id="learnStep"></span></div>
     <div class="tools">
       <button class="tool" onclick="cycleFont()">A</button>
-      <button class="tool" id="learnSpeak">🔊</button>
+      <button class="tool" id="learnSpeak" title="讀">🔊</button>
       <button class="tool" onclick="goHome()">⌂</button>
     </div>
   </div>
@@ -170,7 +170,7 @@ input[type=text]{width:100%;padding:14px 16px;border:3px solid var(--border);bor
     <div class="brand">五項承諾</div>
     <div class="tools">
       <button class="tool" onclick="cycleFont()">A</button>
-      <button class="tool" onclick="speakSummary()">🔊</button>
+      <button class="tool" onclick="speakSummary()" title="讀">🔊</button>
       <button class="tool" onclick="goHome()">⌂</button>
     </div>
   </div>
@@ -190,7 +190,7 @@ input[type=text]{width:100%;padding:14px 16px;border:3px solid var(--border);bor
     <div class="brand">小測驗 <span id="quizStep"></span></div>
     <div class="tools">
       <button class="tool" onclick="cycleFont()">A</button>
-      <button class="tool" id="quizSpeak">🔊</button>
+      <button class="tool" id="quizSpeak" title="讀題">🔊</button>
       <button class="tool" onclick="goHome()">⌂</button>
     </div>
   </div>
@@ -200,6 +200,7 @@ input[type=text]{width:100%;padding:14px 16px;border:3px solid var(--border);bor
     <div class="choices" id="choices"></div>
     <div class="feedback" id="feedback"></div>
     <div class="row" style="margin-top:12px">
+      <button class="btn btn-ghost hidden" id="quizSpeakAns" onclick="speakAnswer()">🔊 讀答案</button>
       <button class="btn btn-ghost hidden" id="quizRetry" onclick="retryQuiz()">再答一次</button>
       <button class="btn btn-primary hidden" id="quizNext" onclick="nextQuiz()">下一題</button>
     </div>
@@ -435,7 +436,6 @@ function showLearn() {
   prev.style.opacity = state.learnIndex === 0 ? '0.45' : '1';
   document.getElementById('learnNext').textContent = state.learnIndex === n - 1 ? '五項總結' : '下一條';
   document.getElementById('learnSpeak').onclick = () => speak(p.speak);
-  speak(p.speak);
 }
 
 function prevLearn() {
@@ -463,7 +463,6 @@ function showSummary() {
       <div class="summary-text"><span class="summary-num">${i + 1}</span>${p.line}</div>
     </div>
   `).join('');
-  speakSummary();
 }
 
 function speakSummary() {
@@ -482,6 +481,7 @@ function showQuiz() {
   showScreen('quiz');
   state.pickedThisQ = false;
   state.pickOk = null;
+  state.answerSpeak = '';
   const q = state.questions[state.quizIndex];
   const n = state.questions.length;
   document.getElementById('quizStep').textContent = `${state.quizIndex + 1}/${n}`;
@@ -489,6 +489,7 @@ function showQuiz() {
   document.getElementById('quizQ').innerHTML = q.q.replace(/[\u4e00-\u9fff]{2,4}/, m => `<span class="hl">${m}</span>`);
   document.getElementById('quizSpeak').onclick = () => speak(q.speak);
   document.getElementById('feedback').className = 'feedback';
+  document.getElementById('quizSpeakAns').classList.add('hidden');
   document.getElementById('quizRetry').classList.add('hidden');
   document.getElementById('quizNext').classList.add('hidden');
   const box = document.getElementById('choices');
@@ -504,7 +505,6 @@ function showQuiz() {
     b.onclick = () => pick(i, opt.ok);
     box.appendChild(b);
   });
-  speak(q.speak);
 }
 
 function pick(i, ok) {
@@ -512,11 +512,17 @@ function pick(i, ok) {
   if (box.dataset.locked === '1') return;
   box.dataset.locked = '1';
   const kids = [...box.children];
+  const letters = ['A', 'B', 'C', 'D'];
   kids.forEach(c => c.classList.add('disabled'));
   kids[i].classList.add(ok ? 'correct' : 'wrong');
-  if (!ok) {
-    const right = state.questions[state.quizIndex].options.findIndex(o => o.ok);
-    if (right >= 0) kids[right].classList.add('correct');
+  const q = state.questions[state.quizIndex];
+  const right = q.options.findIndex(o => o.ok);
+  if (!ok && right >= 0) kids[right].classList.add('correct');
+  if (right >= 0) {
+    const letter = letters[right] || String(right + 1);
+    state.answerSpeak = `正確答案係。${letter}。${q.options[right].label}`;
+  } else {
+    state.answerSpeak = '';
   }
   if (!state.pickedThisQ) {
     state.answered++;
@@ -527,9 +533,13 @@ function pick(i, ok) {
   const fb = document.getElementById('feedback');
   fb.className = 'feedback on ' + (ok ? 'ok' : 'no');
   fb.textContent = ok ? '做得好！' : '再記一次：選正確做法';
-  speak(ok ? '做得好' : '再試記住正確做法');
+  document.getElementById('quizSpeakAns').classList.remove('hidden');
   document.getElementById('quizRetry').classList.remove('hidden');
   document.getElementById('quizNext').classList.remove('hidden');
+}
+
+function speakAnswer() {
+  if (state.answerSpeak) speak(state.answerSpeak);
 }
 
 function retryQuiz() {
@@ -539,6 +549,7 @@ function retryQuiz() {
   }
   state.pickedThisQ = false;
   state.pickOk = null;
+  state.answerSpeak = '';
   speechSynthesis.cancel();
   showQuiz();
 }
